@@ -1,0 +1,31 @@
+sensor:
+  - platform: scrape
+    name: 3-Day Cyclone Risk Counts
+    resource: http://www.bom.gov.au/qld/forecasts/cyclone.shtml
+    scan_interval: 86400
+    select: "#content"
+    value_template: '{{ {"verylow": value.count("Very Low"), "low": value.count("Low") - value.count("Very Low"), "moderate": value.count("Moderate"), "high": value.count("High")}|to_json }}'
+  - platform: template
+    sensors:
+      cyclone_outlook:
+        friendly_name: '3-Day Cyclone Outlook'
+        # By default, the forecast webpage has a key describing each value, hence by default
+        # there we always be at least 1 of each on the page unless the season is over
+        value_template: >-
+          {% set data = states('sensor.3_day_cyclone_risk_counts')|from_json %}
+          {% if data['high'] > 1 %}
+            High
+          {% elif data['moderate'] > 1 %}
+            Moderate
+          {% elif data['low'] > 1 %}
+            Low
+          {% elif data['verylow'] > 1 %}
+            Very Low
+          {% elif data.values() | select('eq', 0) | list | length == data.values() | length %}
+            Reports concluded
+          {% else %}
+            unknown
+          {% endif %}
+        icon_template: "mdi:weather-hurricane"
+        attribute_templates:
+          url: http://www.bom.gov.au/qld/forecasts/cyclone.shtml
