@@ -29,3 +29,20 @@ sensor:
         icon_template: "mdi:weather-hurricane"
         attribute_templates:
           url: http://www.bom.gov.au/qld/forecasts/cyclone.shtml
+          
+automation:
+  - id: cyclone_outlook_alert
+    alias: Alert when cyclone risk is increasing
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.cyclone_outlook
+        to:
+          - "Low"
+          - "Moderate"
+          - "High"
+    action:
+      - service: notify.YOUR_GROUP_HERE
+        data:
+          title: "Cyclone Outlook: risk is now {{ trigger.to_state.state }}"
+          message: "The Tropical Cyclone Outlook for the Coral Sea is now reporting the risk is {{ trigger.to_state.state }}. View the outlook at {{ state_attr('sensor.cyclone_outlook', 'url') }}"
